@@ -1,0 +1,52 @@
+//: Playground - noun: a place where people can play
+
+import Foundation
+
+// 主旨：關於 optional 的原理及運用
+// 建議先閱讀 “enum_and_switch.playground”
+
+// optional 其實是一個 enum
+enum optional<TYPE>{
+    // 就像Array<String> 一樣指定類型，但是在這裡 TYPE 是一個自定的參數，當他被呼叫時可以被指定類型
+    // 例如 L18  L21
+    case none
+    case some_value(TYPE)
+}
+
+// 下面每組寫法都是等價的
+let x0:String? = nil
+let x1 = optional<String>.none
+
+let y0:Int? = 5
+let y1 = optional<Int>.some_value(5)
+
+// 解析時其實是一個switch
+// let x0_0 = x0!       這行編譯器會報錯 但是做的事跟下面類似
+switch x1 {
+    case .none:
+        print("nil")
+        // 程式這時候會報錯
+    case .some_value(let value):
+        print(value)
+        // 做接下來你指定的事情
+}
+
+switch y1 {
+    case .none:
+        print("nil")
+    case .some_value(let value):
+        print(value)
+}
+
+// 用“??”來幫如果是nil的值加入一個預設值
+let z:String = x0 ?? "default_val"
+
+switch x1 {
+case .none:
+    print("default_val")
+    // 如果為nil 就給你預設值
+case .some_value(let value):
+    print(value)
+    // 做接下來你指定的事情
+}
+
