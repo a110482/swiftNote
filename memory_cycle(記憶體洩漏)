@@ -1,0 +1,121 @@
+//: Playground - noun: a place where people can play
+
+import Foundation
+import UIKit
+
+// 主旨：下面兩種狀況會導致記憶體洩漏，最後會附上解法
+// 補充：第三個例子不會造成記憶體洩漏，但可以優化記憶體
+
+// case 1
+class demo_1{
+    private func bar() -> String{
+        return "bar"
+    }
+    
+    lazy private var foo = {    // lazy  為了能在init之前調用 self屬性
+        self.bar()      //  foo 指向 self 而 self 又包含 foo
+        // 所以 class 存在 就不會刪除 foo 而 foo 又一直指著 class 本身 所以永遠不會刪除
+    }
+    
+    // 解法
+    // 在閉包內建立變數 weak_self 並標示為 weak 然後傳入  self 當預設參數
+    // 接下來使用 weak_self
+    lazy private var foo_1 = { [weak weak_self = self] in
+        weak_self!.bar()
+    }
+    
+    // 上面解法更簡潔的寫法
+    // 下面的 self 並不等於 class 內其他的 self 它是給內部使用(lacal)
+    // 而是當閉包內部參數的參照名稱等於外部時，預設會填入外部變數當預設值
+    // [weak self] 等同於 [weak self = self] 左邊是內部用的(lacal) 右邊是外部用的(global)
+    lazy private var foo_2 = { [weak self] in
+        self!.bar()
+    }
+    
+}
+
+// case ２
+// 假設有一個 class 會儲存用戶資料 (其實只有名字...) 然後手動加到 profile_list 裡面
+// 然後裡面提供兩個方法(function)
+// remove_from_list 會把傳入的物件從 profile_list 移除
+// add_action 就是你想幹嘛都可以 他是個閉包 他會暫時存在 class裡 之後會被調用
+class UserData{
+    let name:String!
+    var action:(()->Void)?
+    init?(init_name:String){
+        // 為了後續 domo 我需要初始化可能失敗 只好讓 dennis 不是人了
+        guard init_name != "dennis" else{
+            return nil
+        }
+        self.name = init_name
+    }
+    
+    func remove_from_list(usdr_obj:UserData){
+        let index = profile_list.index { (user_data_obj) -> Bool in
+            if user_data_obj.name == usdr_obj.name{
+                return true
+            }
+            return false
+        }
+        profile_list.remove(at: index!)
+    }
+    
+    func add_action(_ action:@escaping ()->Void){
+        self.action = action
+    }
+}
+
+var profile_list:Array<UserData> = []
+
+// 開始測試拉
+if let user_obj = UserData(init_name: "elijah"){
+    print(user_obj.name)
+    user_obj.add_action {
+        user_obj.remove_from_list(usdr_obj: user_obj)
+        // 現在 elijah 物件裡 存了自己(action 變數指向class本身)
+    }
+    profile_list.append(user_obj)
+}
+print(profile_list)
+profile_list[0].action!()
+// elijah 被刪除了 但是 elijah 裡的 action 還指著自己 所以記憶體永遠不會被釋放
+print(profile_list)
+
+//  解法
+if let user_obj = UserData(init_name: "Alice"){
+    print(user_obj.name)
+    user_obj.add_action { [unowned user_obj] in
+        user_obj.remove_from_list(usdr_obj: user_obj)
+        // 現在 action 裡存的 Alice 物件 不指向 class 本身
+    }
+    profile_list.append(user_obj)
+}
+print(profile_list)
+profile_list[0].action?()
+// 現在刪除了就真的是刪除了
+print(profile_list)
+
+// 結論
+// 永遠不要讓兒子記住爸爸
+// class 裡的變數永遠不要指向 class 本身
+
+
+// case 3
+
+class HttpConnect{
+    var image:UIImage?
+    
+    func get_img(url:URL){
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let urlContent = try? Data(contentsOf: url)
+            // Data 內建的網路拿資料函數
+            if let imageData = urlContent{
+                self?.image = UIImage(data: imageData)
+                // 這行雖然不會造成記憶體洩漏，但如果class被解除
+                // self 會因為被閉包捕捉而暫時留在記憶體裡
+                // 直到網路請求動作完成
+                // 所以改為 weak 可以提早移出 heap
+            }
+        }
+    }
+}
