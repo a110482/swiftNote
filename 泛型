@@ -1,0 +1,169 @@
+//: Playground - noun: a place where people can play
+
+import Foundation
+
+// 主旨：泛型應用在函數, class, protocol
+// 之前在網路上看到一篇關於寶可夢範例還不錯
+// 所以就借來用一下了
+// 故事開始：今天假設我們要做"盜版"寶可夢的遊戲
+
+// 基本的怪物模型
+class basicMonster:NSObject{}
+// 我做了兩隻怪物
+class Pikachu:basicMonster{}
+class Charizard:basicMonster{}
+
+
+// 這是訓練師
+class trainer{
+    private(set) var name:String
+    init(name:String) {
+        self.name = name
+    }
+    
+    // 存擁有的怪物
+    private var ownedMonster:Array<basicMonster> = []
+    // 然後需要一個抓怪物的函數
+    func getMonster(monster:basicMonster){
+        ownedMonster.append(monster)
+    }
+}
+
+// 然後有一天PM說：有可愛動物保護協會來抗議讓小動物ＰＫ很殘忍
+// 所以傷害改由訓練師承受，所以現在你需要補血道具
+
+class healPotion:NSObject{}
+
+// 也要有一個變數來存血量 -> 看“變更一”
+class trainer_v2{
+    private(set) var name:String
+    init(name:String) {
+        self.name = name
+    }
+    private var ownedMonster:Array<basicMonster> = []
+    func getMonster(monster:basicMonster){
+        ownedMonster.append(monster)
+    }
+    
+    // 變更一
+    private var health:Int = 100
+}
+// 然後馴獸師要有補血函數
+extension trainer_v2{
+    func healBy(item:healPotion){
+        self.health += 20
+    }
+}
+
+// 然後有一天ＰＭ又走到妳桌子旁邊，說了一件你從來沒有想像過的事...
+// PM: 我覺得，如果吃口袋怪物可以補血不是很棒嗎？
+// 你：WTF....?
+// PM: 你看嘛，可達鴨不是感覺就很好吃嗎？
+// 你：......
+
+// 但是這時候要怎麼改呢? 直覺當然是再增加一個函數拿來吃可達鴨
+// 但是這樣會有兩個函數可以訪問同一個變數 然後做的事情又差不多
+// 這樣之後會很亂 暴露的接口越少越好
+// 這時候我們可以利用泛型 來讓一個函數可以吃多種class
+
+extension trainer_v2{
+    func healBy_v2<T:NSObject>(item:T){
+        // 這裡是在跟編譯器說明 "Ｔ" 是一種型別，然後屬於NSObject的 subclass
+        // 當然也可以不作限制 healBy_v2<T>(item:T) 這句也是合法的
+        if item.isKind(of: healPotion.self){
+            self.health += 20
+        }
+        else if item.isKind(of: basicMonster.self){
+            self.health += 30
+            // 吃怪物補比較多
+        }
+    }
+}
+
+// 然後故事就圓滿的結束了....才怪
+// PM說 現在要推寵物系統，讓怪物可以在地圖上跟著走
+// 所以你需要一個欄位來記錄現在是開哪隻寵物    看 “變更二”
+class trainer_v3{
+    private(set) var name:String
+    init(name:String) {
+        self.name = name
+    }
+    
+    // 存擁有的怪物
+    private var ownedMonster:Array<basicMonster> = []
+    // 然後需要一個抓怪物的函數
+    func getMonster(monster:basicMonster){
+        ownedMonster.append(monster)
+    }
+    
+    // 變更一
+    private var health:Int = 100
+    
+    // 變更二
+    var pet:basicMonster? = nil
+}
+
+
+// 這時候PM 又出現了
+// PM: 我覺得，藥水瓶可以跟在後面走路也是蠻萌的 >///<
+// 你：....這是什麼品味 （故事設定裡  PM是個可愛的妹子，所以你不忍心違背她
+
+// 現在 pet 也要改成泛型了
+class trainer_v4<T:NSObject>{   // <- 這裡要加這個
+    private(set) var name:String
+    init(name:String) {
+        self.name = name
+    }
+    private var ownedMonster:Array<basicMonster> = []
+    func getMonster(monster:basicMonster){
+        ownedMonster.append(monster)
+    }
+    
+    private var health:Int = 100
+    
+    // 然後你就可以把pet變成泛型了
+    var pet:T? = nil
+}
+
+// 然後有一天你們家ＰＭ又發作了
+// 雖然你們關係越來越好，甚至還約了一起玩 mmorpg
+// 但是就在某天你準備要下線的時候
+// PM: 我覺得 訓練師可以多做幾個種族，然後每個種族有不同特殊能力不是很棒嗎？
+// 你： 你那邊有捲尺嗎
+// PM：沒有誒，怎麼了？
+// 你： 我要量一下你腦洞的直徑
+
+// 所以現在的目標是要有多種種族的訓練師
+// 雖然各自有特殊能力，但是還是有相同之處
+// 所以我們要來寫一個馴獸師的protocol
+
+protocol basicTrainerProtocol{
+    var name:String{get}
+    var ownedMonster:Array<basicMonster>{get set}
+    var health:Int{get set}
+
+    // 先聲明 T
+    associatedtype T:NSObject
+    // 然後你就可以把pet變成泛型了
+    var pet:T?{get set}
+}
+extension basicTrainerProtocol{
+    mutating func getMonster(monster:basicMonster){
+        self.ownedMonster.append(monster)
+    }
+}
+
+// 來實做一個基本馴獸師
+class basicTrainer<T:NSObject>:NSObject,basicTrainerProtocol{
+    private(set) var name:String
+    init(name:String) {
+        self.name = name
+    }
+    var ownedMonster:Array<basicMonster> = []
+    var health:Int = 100
+    var pet:T? = nil
+}
+
+// 然後教學就到這裡結束拉 謝謝觀賞
+// 至於你跟PM的結局...?
+// 我怎麼會知道你跟你們家ＰＭ最後有沒有在一起勒？ 要問你吧
