@@ -1,0 +1,37 @@
+//: Playground - noun: a place where people can play
+
+import UIKit
+
+// 主旨：關於 UIView 跟 CGRect 等繪圖功能
+
+class view:UIView{
+    
+    override func draw(_ rect: CGRect) {
+        // 可以在這裡繪製一些東西
+        
+        //let content = UIGraphicsGetCurrentContext()
+        let path = UIBezierPath()
+        path.move(to: CGPoint(x: 80, y: 50))
+        path.addLine(to: CGPoint(x: 140, y: 150))
+        path.addLine(to: CGPoint(x: 10, y: 150))
+        path.close()    // 閉合曲線
+        
+        // 設置顏色跟線寬
+        UIColor.green.setFill()
+        UIColor.red.setStroke()
+        path.lineWidth = 3.0
+        
+        path.fill() // 填充
+        path.stroke()   // 描邊
+        
+        path.addClip() // 讓之後繪製的東西都只顯示在這範圍裡 像遮罩一樣
+        
+    }
+    func some_func(){
+        // 如果有必要重新繪製畫面 呼叫下面這函數
+        // 絕對不要直接呼叫 draw(_ rect: CGRect)
+        self.setNeedsDisplay()
+    }
+}
+
+
