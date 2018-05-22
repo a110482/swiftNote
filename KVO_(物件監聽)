@@ -1,0 +1,51 @@
+//: Playground - noun: a place where people can play
+
+import Foundation
+
+// 主旨：KVO 物件鍵值監聽
+// 內容：建立一個物件“child”，設立一個監聽器監聽他的年齡
+
+class Child: NSObject {
+    var name: String
+    // KVO 要被監聽的物件 一定要用 @objc dynamic 開頭
+    @objc dynamic var age: Int
+    
+    init(name: String, age: Int) {
+        self.name = name
+        self.age = age
+        super.init()
+    }
+    
+    func celebrateBirthday() {
+        print("生日")
+        age += 1
+    }
+}
+
+// 建立被監聽物件
+var mia = Child(name: "Mia", age: 5)
+
+// 設定 KVO
+// 監聽狀態有４種可以選 new, old, initial, prior
+let observation = mia.observe(\.age, options: [.initial, .old]) { (child, change) in
+    if let oldValue = change.oldValue {
+        print("\(child.name)’s age changed from \(oldValue) to \(child.age)")
+    } else {
+        print("\(child.name)’s age is now \(child.age)")
+    }
+}
+
+// Trigger KVO (see output in the console)
+
+mia.celebrateBirthday()
+
+mia.celebrateBirthday()
+// 註銷觀察
+observation.invalidate()
+
+// 變成只有印“生日”
+mia.celebrateBirthday()
+
+
+
+
