@@ -1,0 +1,81 @@
+//: Playground - noun: a place where people can play
+
+import Foundation
+
+// 主旨 示範 enum and switch
+
+// 建立一個可以儲存 名字 性別 跟 年齡 的 enum
+enum my_data{
+    case name(String)
+    case sex(String)
+    case age(Int)
+    // 也可以儲存函數
+    case age_plus_1((Int) -> Int)
+}
+
+// 一個會把年齡加一的函數
+func func_age_plus_1(_ age:Int) -> Int{
+    return age + 1
+}
+
+// 可以應用在字典上 如果字典需要儲存一種一上的值
+let demo_dic:Dictionary<String,my_data> = [
+    "name": my_data.name("Elijah"),
+    "sex": my_data.sex("male"),
+    "age": my_data.age(30),
+    "age_plus_1": my_data.age_plus_1(func_age_plus_1)
+]
+
+// 列印我的各種資料
+// 因為函數輸出為字串，所以如果要輸出年齡需要轉成字串
+func get_my(_ data_type:String) -> String{
+    if let data = demo_dic[data_type]{
+        switch data {
+            // let age_val 是一個關聯值 用來取出 .age 裡儲存的值
+        case .age(let age_val):
+            return "age: \(String(age_val))"
+        case .name(let name_val):
+            return "name: \(name_val)"
+        case .age_plus_1(let relate_func_age_plus_1):
+            // 這裡的 30 應該要去取回自己的年齡 但demo為了簡化 直接輸入３０
+            let result = relate_func_age_plus_1(30)
+            return "age_plus_1: \(String(result))"
+        default:
+            return "該項資料保密"
+        }
+    }
+    return "沒有該項資料"
+}
+
+print(get_my("age"))
+print(get_my("name"))
+print(get_my("age_plus_1"))
+print(get_my("sex"))
+
+
+
+// 一個歸遞的例子 示範 (5+4)*2
+indirect enum ArithmeticExpression {
+    case number(Int)
+    case addition(ArithmeticExpression, ArithmeticExpression)
+    case multiplication(ArithmeticExpression, ArithmeticExpression)
+}
+
+let five = ArithmeticExpression.number(5)
+let four = ArithmeticExpression.number(4)
+let sum = ArithmeticExpression.addition(five, four)
+let product = ArithmeticExpression.multiplication(sum, ArithmeticExpression.number(2))
+
+func evaluate(_ expression: ArithmeticExpression) -> Int {
+    switch expression {
+    case let .number(value):
+        return value
+    case let .addition(left, right):
+        return evaluate(left) + evaluate(right)
+    case let .multiplication(left, right):
+        return evaluate(left) * evaluate(right)
+    }
+}
+print(evaluate(product))
+
+
