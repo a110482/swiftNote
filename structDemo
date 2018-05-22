@@ -1,0 +1,23 @@
+//: Playground - noun: a place where people can play
+
+import Foundation
+
+// 主旨：示範struct
+
+struct Demo{
+    // 內建了init 所有未指定變數都會在初始化時要求輸入 參考 Ｌ18
+    // 但是跟class一樣可以設成 “？” 來迴避初始化問題
+    var var_without_init:String
+    
+    // 因為 struct 是複製實體  所以當要對內部變數修改時 務必加上關鍵字 mutating
+    mutating func change_var(){
+        var_without_init = "var_been_changed"
+    }
+}
+
+var demo = Demo(var_without_init: "var_without_init")
+print(demo.var_without_init)
+demo.change_var()
+print(demo.var_without_init)
+
+
